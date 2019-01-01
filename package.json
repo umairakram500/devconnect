@@ -4,8 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "server": "nodemon server.js"
+    "start": "nodemon server.js"
   },
   "author": "Umair Akram",
   "license": "MIT",
@@ -13,11 +12,13 @@
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.3",
     "express": "^4.16.4",
+    "gravatar": "^1.8.0",
     "jsonwebtoken": "^8.4.0",
     "mongoose": "^5.4.0",
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
-    "validator": "^10.9.0"
+    "validator": "^10.9.0",
+    "validatorjs": "^3.15.1"
   },
   "devDependencies": {
     "nodemon": "^1.18.9"
