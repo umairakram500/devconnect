@@ -84,9 +84,129 @@ router.delete(
           return res.status(401).json({ errors: "User not authorized" });
         }
         // Delete post
-        post.remove().then(() => res.json({ success: true }));
+        post
+          .remove()
+          .then(() => res.json({ success: true }))
+          .catch(err =>
+            res.status(401).json({ error: "delete error! Try later" })
+          );
       })
-      .then(err => res.status(404).json(err));
+      .catch(err => res.status(404).json(err));
+  }
+);
+
+// @route   Post api/posts/like/:id
+// @desc    Like Post
+// @access  Private
+router.post(
+  "/like/:id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    Post.findById(req.params.id)
+      .then(post => {
+        //return res.json(post);
+        // if (!post) {
+        //   return res.status(404).json({ error: "Post not found" });
+        // } else
+        if (
+          post.likes.filter(like => like.user.toSting() === req.user.id)
+            .length > 0
+        ) {
+          // check authorizatrion
+          return res.status(400).json({ error: "User already like this post" });
+        } else {
+          // Add user id to post like array
+          post.likes.unshift({ user: req.user.id });
+          post
+            .save()
+            .then(post => res.json(post))
+            .catch(err =>
+              res.status(401).json({ error: "save error! Try later" })
+            );
+        }
+      })
+      .catch(err => res.status(404).json({ error: "Post Error" }));
+  }
+);
+
+// @route   Post api/posts/unlike/:id
+// @desc    unLike Post
+// @access  Private
+router.post(
+  "/unlike/:id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    Post.findById(req.params.id)
+      .then(post => {
+        if (!post) {
+          return res.status(404).json({ error: "Post not found" });
+        } else if (
+          post.likes.filter(like => like.user.toSting() === req.user.id)
+            .length === 0
+        ) {
+          // check user like
+          return res.status(400).json({ error: "User not yet like this post" });
+        }
+        // find like index
+        const likeIndex = post.likes
+          .map(item => item.user.toSting())
+          .indexOf(req.user.id);
+        // remove like
+        post.likes.splice(likeIndex, 1);
+        // save after remove like
+        post
+          .save()
+          .then(post => res.json(post))
+          .catch(err =>
+            res.status(401).json({ error: "save error! Try later" })
+          );
+      })
+      .catch(err => res.status(404).json(err));
+  }
+);
+
+// @route   POST api/posts/comment/:id
+// @desc    create post
+// @access  private
+router.post(
+  "/comment/:id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const { isValid, errors } = PostRequest(req.body);
+    if (!isValid) {
+      return res.status(404).json(errors);
+    }
+
+    const comment = {
+      text: req.body.text,
+      name: req.body.name,
+      avatar: req.body.avatar,
+      user: req.user.id
+    };
+
+    Post.findById(req.params.id).then(post => {
+      post.comments.unshift(comment);
+      post.save().then(post => res.json(post));
+    });
+  }
+);
+
+// @route   POST api/posts/comment/:id/:comment_id
+// @desc    create post
+// @access  private
+router.post(
+  "/comment/:id/:comment_id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    Post.findById(req.params.id).then(post => {
+      const commentIndex = post.comments
+        .map(comment => comment._id.toSting())
+        .indexOf(req.params.comment_id);
+
+      post.comments.splice(commentIndex, 1);
+
+      post.save().then(post => res.json(post));
+    });
   }
 );
 
