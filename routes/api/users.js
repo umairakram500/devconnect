@@ -30,7 +30,8 @@ router.post("/register", (req, res) => {
 
   User.findOne({ email: req.body.email }).then(user => {
     if (user) {
-      return res.status(400).json({ msg: "Email already exists!" });
+      errors.email = ["Email already exists!"];
+      return res.status(400).json(errors);
     } else {
       const avatar = gravatar.url(req.body.email, {
         s: "200", // Size
@@ -51,8 +52,8 @@ router.post("/register", (req, res) => {
           newUser.password = hash;
           newUser
             .save()
-            .then(user => res.status(400).json(user))
-            .catch(err => console.log(err));
+            .then(user => res.json(user))
+            .catch(err => res.status(400).json({ error: "save error" }));
         });
       });
     }

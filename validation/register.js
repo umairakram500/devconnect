@@ -1,23 +1,26 @@
-const Validator = require("validator");
-const isEmpty = require("./is-empty");
+const Validator = require("validatorjs");
 
 module.exports = data => {
-  let errors = {};
+  const rules = {
+    name: "required|string|min:5|max:30",
+    email: "required|email",
+    password: "required|min:6",
+    password2: "required|same:password"
+  };
+  const attrNames = {
+    name: "Name",
+    email: "Email",
+    password: "Password",
+    password2: "Confirm Password"
+  };
 
-  if (!Validator.isLength(data.name, { min: 2, max: 30 })) {
-    errors.name = "Name must be between 2 and 30";
-  }
-
-  if (Validator.isEmpty(data.email) || !Validator.isEmail(data.email)) {
-    errors.email = "Enter valid email address";
-  }
-
-  if (!Validator.isLength(data.password, { min: 6 })) {
-    errors.password = "Password must be minimum 6 charts";
-  }
+  const validation = new Validator(data, rules);
+  validation.setAttributeNames(attrNames);
+  const errors = validation.errors.all();
+  const valid = validation.passes();
 
   return {
     errors,
-    isValid: isEmpty(errors)
+    isValid: valid
   };
 };
