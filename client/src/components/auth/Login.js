@@ -1,4 +1,9 @@
 import React, { Component } from "react";
+import propTypes from "prop-types";
+import { connect } from "react-redux";
+import { loginUser } from "../../actions/authActions";
+import InpupFieldGroup from "../comment/InputFieldGroup";
+
 import Validator from "validatorjs";
 
 class Login extends Component {
@@ -7,7 +12,8 @@ class Login extends Component {
 
     this.state = {
       email: "",
-      password: ""
+      password: "",
+      errors: {}
     };
 
     this.onChange = this.onChange.bind(this);
@@ -15,6 +21,22 @@ class Login extends Component {
 
   onChange(e) {
     this.setState({ [e.target.name]: e.target.value });
+  }
+
+  componentDidMount() {
+    if (this.props.auth.isAuthenticated) {
+      this.props.history.push("/dashboard");
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.auth.isAuthenticated) {
+      this.props.history.push("/dashboard");
+    }
+
+    if (nextProps.errors) {
+      this.setState({ errors: nextProps.errors });
+    }
   }
 
   onSubmit(e) {
@@ -31,10 +53,17 @@ class Login extends Component {
     const validation = new Validator(newUser, rules);
 
     //const errors = validation.fails();
-    console.log(validation.errors.all());
+    if (validation.fails()) {
+      this.setState({ errors: validation.errors.all() });
+    } else {
+      this.setState({ errors: {} });
+      this.props.loginUser(newUser);
+    }
   }
 
   render() {
+    const { errors } = this.state;
+
     return (
       <div className="login">
         <div className="container">
@@ -45,26 +74,22 @@ class Login extends Component {
                 Sign in to your DevConnector account
               </p>
               <form onSubmit={this.onSubmit.bind(this)}>
-                <div className="form-group">
-                  <input
-                    type="text"
-                    className="form-control form-control-lg"
-                    placeholder="Email Address"
-                    name="email"
-                    onChange={this.onChange}
-                    value={this.state.email}
-                  />
-                </div>
-                <div className="form-group">
-                  <input
-                    type="password"
-                    className="form-control form-control-lg"
-                    placeholder="Password"
-                    name="password"
-                    onChange={this.onChange}
-                    value={this.state.password}
-                  />
-                </div>
+                <InpupFieldGroup
+                  name="email"
+                  onChange={this.onChange}
+                  value={this.state.email}
+                  placeholder="Email Address"
+                  error={errors.email}
+                />
+
+                <InpupFieldGroup
+                  name="password"
+                  onChange={this.onChange}
+                  value={this.state.password}
+                  placeholder="Password"
+                  error={errors.password}
+                />
+
                 <input type="submit" className="btn btn-info btn-block mt-4" />
               </form>
             </div>
@@ -75,4 +100,15 @@ class Login extends Component {
   }
 }
 
-export default Login;
+Login.propTypes = {
+  loginUser: propTypes.func.isRequired,
+  auth: propTypes.object.isRequired,
+  errors: propTypes.object.isRequired
+};
+
+const mapStateToProps = state => ({
+  auth: state.auth,
+  errors: state.errors
+});
+
+export default connect(mapStateToProps, { loginUser })(Login);
